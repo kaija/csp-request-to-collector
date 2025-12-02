@@ -1,0 +1,40 @@
+{
+  "name": "csp-report-api",
+  "version": "1.0.0",
+  "description": "CSP report-to API using Serverless Framework v4",
+  "main": "handler.js",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "deploy:dev": "npx serverless deploy --stage dev",
+    "deploy:production": "npx serverless deploy --stage production",
+    "invoke:local": "npx serverless invoke local -f reportHandler"
+  },
+  "keywords": [
+    "csp",
+    "report-to",
+    "serverless",
+    "aws",
+    "lambda"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "fast-check": "^3.15.0",
+    "serverless": "^3.38.0"
+  },
+  "dependencies": {},
+  "jest": {
+    "testEnvironment": "node",
+    "coverageDirectory": "coverage",
+    "collectCoverageFrom": [
+      "handler.js",
+      "!node_modules/**"
+    ],
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ]
+  }
+}

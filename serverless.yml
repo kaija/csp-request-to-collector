@@ -1,0 +1,28 @@
+
+service: csp-report-api
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs24.x
+  region: ${self:custom.config.region, 'us-east-1'}
+  memorySize: ${self:custom.config.memorySize, 128}
+  timeout: ${self:custom.config.timeout, 10}
+  logs:
+    httpApi: true
+  httpApi:
+    cors: true
+    name: ${self:custom.config.apiName, 'csp-report-api'}
+
+custom:
+  config: ${file(config.${opt:stage, 'dev'}.yml)}
+
+functions:
+  reportHandler:
+    handler: handler.reportHandler
+    description: Receives and logs CSP violation reports
+    events:
+      - httpApi:
+          path: /report-to
+          method: POST

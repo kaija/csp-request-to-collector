@@ -1,0 +1,20 @@
+# Development Environment Configuration
+# This file contains parameters specific to the development environment
+
+# AWS Region for deployment
+region: us-east-1
+
+# API Gateway name
+apiName: csp-report-api-dev
+
+# Lambda function memory size (in MB)
+memorySize: 128
+
+# Lambda function timeout (in seconds)
+timeout: 10
+
+# CloudWatch Logs retention period (in days)
+logRetentionDays: 7
+
+# Custom domain (optional - uncomment and configure if needed)
+# customDomain: dev-csp-reports.example.com
