@@ -6,16 +6,16 @@
 /**
  * Structured logging function for CloudWatch
  * Outputs JSON formatted logs with all required metadata fields
- * 
+ *
  * Note: JSON.stringify() correctly handles Unicode characters including:
  * - Emoji (😀, 🎉, etc.)
  * - Multi-byte Unicode characters (中文, 日本語, etc.)
  * - Control characters (\n, \t, etc.)
  * - Special symbols (©, ®, ™, etc.)
- * 
+ *
  * All special characters are preserved in the JSON output and will be
  * correctly stored in CloudWatch Logs.
- * 
+ *
  * @param {Object} logData - Log data object
  * @param {string} logData.timestamp - ISO 8601 timestamp
  * @param {string} logData.requestId - Request ID from API Gateway
@@ -67,14 +67,14 @@ exports.reportHandler = async (event) => {
     // Extract metadata from event.requestContext
     const requestId = event.requestContext?.requestId || 'unknown';
     const sourceIp = event.requestContext?.http?.sourceIp || 'unknown';
-    
+
     // Extract headers
     const userAgent = event.headers?.['user-agent'] || event.headers?.['User-Agent'] || 'unknown';
     const contentType = event.headers?.['content-type'] || event.headers?.['Content-Type'] || 'unknown';
-    
+
     // Get current timestamp
     const timestamp = new Date().toISOString();
-    
+
     // Create metadata object for logging
     const metadata = {
       timestamp,
@@ -83,10 +83,15 @@ exports.reportHandler = async (event) => {
       userAgent,
       contentType
     };
-    
+
     // Parse request body
-    const body = event.body || '';
-    
+    let body = event.body || '';
+
+    // Handle base64 encoded body from API Gateway
+    if (event.isBase64Encoded) {
+      body = Buffer.from(body, 'base64').toString('utf-8');
+    }
+
     // Handle empty body
     if (!body || body.trim() === '') {
       const warningLog = createLogEntry(metadata, {
@@ -94,13 +99,13 @@ exports.reportHandler = async (event) => {
         message: 'Received empty request body'
       });
       logToCloudWatch(warningLog);
-      
+
       return {
         statusCode: 200,
         body: JSON.stringify({ message: 'Report received (empty body)' })
       };
     }
-    
+
     // Parse JSON body
     // JSON.parse() correctly handles all Unicode characters including emoji,
     // multi-byte characters, and control characters
@@ -117,23 +122,23 @@ exports.reportHandler = async (event) => {
         rawBody: body
       });
       logToCloudWatch(errorLog);
-      
+
       return {
         statusCode: 200,
         body: JSON.stringify({ message: 'Report received (invalid JSON)' })
       };
     }
-    
+
     // Log structured CSP report to CloudWatch
     const logEntry = createLogEntry(metadata, { report });
     logToCloudWatch(logEntry);
-    
+
     // Return success response
     return {
       statusCode: 200,
       body: JSON.stringify({ message: 'Report received successfully' })
     };
-    
+
   } catch (error) {
     // Handle internal errors
     const metadata = {
@@ -143,7 +148,7 @@ exports.reportHandler = async (event) => {
       userAgent: event.headers?.['user-agent'] || event.headers?.['User-Agent'] || 'unknown',
       contentType: event.headers?.['content-type'] || event.headers?.['Content-Type'] || 'unknown'
     };
-    
+
     const errorLog = createLogEntry(metadata, {
       level: 'ERROR',
       message: 'Internal error processing request',
@@ -153,7 +158,7 @@ exports.reportHandler = async (event) => {
       }
     });
     logToCloudWatch(errorLog);
-    
+
     return {
       statusCode: 500,
       body: JSON.stringify({ message: 'Internal server error' })
